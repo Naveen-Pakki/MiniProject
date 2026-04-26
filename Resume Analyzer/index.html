@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- PDF.js for PDF extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <!-- Mammoth for DOCX extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        <div class="glow-orb orb-3"></div>
+        <div class="glow-orb orb-4"></div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+        <button id="theme-btn" class="icon-btn">🌞</button>
+    </div>
+
+    <main class="container">
+        <header>
+            <h1>ATS Resume Analyzer</h1>
+            <p>Upload your resume to check its ATS compatibility against your target role.</p>
+        </header>
+
+        <section class="input-section glass-card">
+            <div class="input-controls">
+                <div class="upload-container">
+                    <input type="file" id="file-upload" accept=".pdf,.docx" class="hidden-input">
+                    <label for="file-upload" class="secondary-btn">
+                        <span class="btn-icon">📁</span>
+                        <span class="btn-text">Upload Resume</span>
+                    </label>
+                    <span id="file-name" class="file-name-display">No file selected</span>
+                </div>
+                
+                <div class="role-selector">
+                    <select id="job-role" class="styled-select">
+                        <option value="" disabled selected>Select Role</option>
+                        <option value="frontend">Frontend Developer</option>
+                        <option value="backend">Backend Developer</option>
+                        <option value="fullstack">Full Stack Developer</option>
+                        <option value="java">Java Developer</option>
+                        <option value="python">Python Developer</option>
+                        <option value="data">Data Analyst</option>
+                        <option value="ml">Machine Learning Engineer</option>
+                        <option value="devops">DevOps Engineer</option>
+                        <option value="software">Software Engineer</option>
+                        <option value="android">Android Developer</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="analyze-btn" class="primary-btn">
+                <div id="btn-loader" class="loader hidden"></div>
+                <span id="btn-text">Analyze ATS Match</span>
+                <span class="btn-icon">✨</span>
+            </button>
+        </section>
+
+        <section id="results-section" class="results-grid hidden">
+            <!-- Left Column: Metrics -->
+            <div style="grid-column: 1; display: flex; flex-direction: column; gap: 2rem;">
+                <!-- Score Card -->
+                <div class="score-card glass-card" style="margin: 0; width: 100%;">
+                    <h2>ATS Match Score</h2>
+                    <div class="score-circle">
+                        <svg viewBox="0 0 100 100">
+                            <defs>
+                                <linearGradient id="score-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#10b981" />
+                                    <stop offset="100%" stop-color="#2563eb" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="bg-circle" cx="50" cy="50" r="45"></circle>
+                            <circle class="progress-circle" id="score-progress" cx="50" cy="50" r="45" stroke="url(#score-gradient)" stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                        </svg>
+                        <div class="score-value">
+                            <span id="score-number">0</span><span class="percent-sign">%</span>
+                        </div>
+                    </div>
+                    <p id="score-label" class="score-label">Strong Match</p>
+                </div>
+
+                <!-- ATS Breakdown Card -->
+                <div id="ats-breakdown-card" class="glass-card">
+                    <h2><span class="icon">📊</span> ATS Breakdown</h2>
+                    <div class="breakdown-content">
+                        <p><strong>Strengths:</strong> Good structure, relevant skills</p>
+                        <p><strong>Weaknesses:</strong> Missing keywords</p>
+                        <p><strong>Score explanation:</strong> Based on keyword matching</p>
+                    </div>
+                </div>
+
+                <!-- Score Booster Card -->
+                <div class="glass-card">
+                    <h2><span class="icon">⚡</span> Score Booster</h2>
+                    <ul style="list-style: none; padding: 0; margin: 1rem 0 1.5rem 0; font-size: 0.95rem; line-height: 1.6;">
+                        <li style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <span style="color: var(--success); font-weight: bold;">✓</span> <span>Add missing keywords automatically</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <span style="color: var(--success); font-weight: bold;">✓</span> <span>Improve resume format</span>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="color: var(--success); font-weight: bold;">✓</span> <span>Suggest strong action verbs</span>
+                        </li>
+                    </ul>
+                    <button class="primary-btn" style="margin: 0; width: 100%; max-width: none;">
+                        Boost My Resume 🚀
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Skills & Suggestions -->
+            <div class="details-column">
+                <div class="skills-card glass-card">
+                    <h2><span class="icon">🎯</span> Missing Keywords</h2>
+                    <div id="missing-skills-container" class="tags-container">
+                        <!-- Missing Skills tags will be injected here -->
+                    </div>
+                    <p id="no-missing-msg" class="hidden text-success">Perfect! You matched all expected keywords.</p>
+                </div>
+
+                <div class="suggestions-card glass-card">
+                    <h2><span class="icon">💡</span> Resume Improvements</h2>
+                    <ul id="suggestions-list" class="suggestions-list">
+                        <!-- Suggestions will be injected here -->
+                    </ul>
+                </div>
+
+                <!-- Improved Resume Section -->
+                <div id="improved-resume-card" class="glass-card">
+                    <div class="card-header">
+                        <h2><span class="icon">✨</span> Improved Resume</h2>
+                        <button id="copy-btn" class="secondary-btn small-btn">
+                            <span class="btn-icon">📋</span> Copy Resume
+                        </button>
+                    </div>
+                    <div id="improvedResume" class="improved-resume-content">
+                        <p class="placeholder-text">Your AI-optimized resume will appear here after analysis...</p>
+                    </div>
+                </div>
+            </div>
+            
+
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
